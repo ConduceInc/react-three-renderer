@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import PropTypes from 'prop-types';
 
 import THREEElementDescriptor from '../THREEElementDescriptor';
@@ -6,11 +5,10 @@ import THREEElementDescriptor from '../THREEElementDescriptor';
 class InterleavedBufferAttributeDescriptor extends THREEElementDescriptor {
   constructor(react3RendererInstance) {
     super(react3RendererInstance);
-    const self = this;
-    this.hasProp('key', {
+    this.hasProp('id', {
       type: PropTypes.string,
-      update(threeObject, key) {
-        self.key = key;
+      update(threeObject, id) {
+        threeObject.id = id;
       },
       updateInitial: true,
       default: '',
@@ -18,7 +16,15 @@ class InterleavedBufferAttributeDescriptor extends THREEElementDescriptor {
     this.hasProp('size', {
       type: PropTypes.number,
       update(threeObject, size) {
-        self.size = size;
+        threeObject.size = size;
+      },
+      updateInitial: true,
+      default: 1,
+    });
+    this.hasProp('type', {
+      type: PropTypes.number,
+      update(threeObject, type) {
+        threeObject.type = type;
       },
       updateInitial: true,
       default: 1,
@@ -26,14 +32,14 @@ class InterleavedBufferAttributeDescriptor extends THREEElementDescriptor {
   }
 
   construct() {
-    console.debug('construct buffer attribute');
-    return {};
+    return { userData: {} };
   }
 
   applyInitialProps(threeObject, props) {
     super.applyInitialProps(threeObject, props);
-    this.key = props.key;
-    this.size = props.size;
+    threeObject.id = props.id;
+    threeObject.size = props.size;
+    threeObject.type = props.type;
   }
 
 }
