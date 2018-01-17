@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import uuidv4 from 'uuid/v4';
 
 import THREEElementDescriptor from '../THREEElementDescriptor';
 
@@ -32,7 +33,7 @@ class InterleavedBufferAttributeDescriptor extends THREEElementDescriptor {
   }
 
   construct() {
-    return { userData: {} };
+    return { userData: {}, uuid: uuidv4() };
   }
 
   applyInitialProps(threeObject, props) {
