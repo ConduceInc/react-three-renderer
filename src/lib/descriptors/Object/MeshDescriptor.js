@@ -1,10 +1,23 @@
 import * as THREE from 'three';
 import invariant from 'fbjs/lib/invariant';
 
+import PropTypes from 'prop-types';
 import ResourceReference from '../../Resources/ResourceReference';
 import Object3DDescriptor from './Object3DDescriptor';
 
 class MeshDescriptor extends Object3DDescriptor {
+  constructor(react3RendererInstance) {
+    super(react3RendererInstance);
+    this.hasProp('drawMode', {
+      type: PropTypes.number,
+      update(threeObject, drawMode) {
+        threeObject.setDrawMode(drawMode);
+      },
+      updateInitial: true,
+      default: '',
+    });
+  }
+
   construct(props) {
     const geometry = props.hasOwnProperty('geometry') ? props.geometry : undefined;
     const material = props.hasOwnProperty('material') ? props.material : undefined;
@@ -59,6 +72,11 @@ class MeshDescriptor extends Object3DDescriptor {
     }
 
     return super.getBoundingBoxes(threeObject);
+  }
+
+  applyInitialProps(threeObject, props) {
+    super.applyInitialProps(threeObject, props);
+    threeObject.setDrawMode(props.drawMode);
   }
 }
 
