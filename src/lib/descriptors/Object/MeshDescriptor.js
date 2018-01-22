@@ -11,7 +11,9 @@ class MeshDescriptor extends Object3DDescriptor {
     this.hasProp('drawMode', {
       type: PropTypes.number,
       update(threeObject, drawMode) {
-        threeObject.setDrawMode(drawMode);
+        if (threeObject.hasOwnProperty('setDrawMode')) {
+          threeObject.setDrawMode(drawMode);
+        }
       },
       updateInitial: true,
       default: '',
@@ -76,7 +78,9 @@ class MeshDescriptor extends Object3DDescriptor {
 
   applyInitialProps(threeObject, props) {
     super.applyInitialProps(threeObject, props);
-    threeObject.setDrawMode(props.drawMode);
+    if (threeObject.hasOwnProperty('setDrawMode')) {
+      threeObject.setDrawMode(props.drawMode);
+    }
   }
 }
 
