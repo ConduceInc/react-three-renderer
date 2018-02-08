@@ -8,10 +8,10 @@ class InterleavedBufferGeometryDescriptor extends GeometryDescriptorBase {
     super(react3RendererInstance);
     const self = this;
     this.hasProp('vbo', {
-      type: PropTypes.instanceOf(Float32Array),
+      type: PropTypes.instanceOf(ArrayBuffer),
       update(threeObject, vbo) {
-        self.vbo = vbo;
-        self.updated = true;
+        threeObject.userData.vbo = vbo;
+        threeObject.userData.updated = true;
       },
       updateInitial: true,
       default: new Float32Array(),
@@ -19,8 +19,8 @@ class InterleavedBufferGeometryDescriptor extends GeometryDescriptorBase {
     this.hasProp('count', {
       type: PropTypes.number,
       update(threeObject, count) {
-        self.count = count;
-        self.updated = true;
+        threeObject.userData.count = count;
+        threeObject.userData.updated = true;
       },
       updateInitial: true,
       default: 0,
@@ -28,8 +28,8 @@ class InterleavedBufferGeometryDescriptor extends GeometryDescriptorBase {
     this.hasProp('offset', {
       type: PropTypes.number,
       update(threeObject, offset) {
-        self.offset = offset;
-        self.updated = true;
+        threeObject.userData.offset = offset;
+        threeObject.userData.updated = true;
       },
       updateInitial: true,
       default: 0,
@@ -37,8 +37,8 @@ class InterleavedBufferGeometryDescriptor extends GeometryDescriptorBase {
     this.hasProp('indexCount', {
       type: PropTypes.number,
       update(threeObject, indexCount) {
-        self.indexCount = indexCount;
-        self.updated = true;
+        threeObject.userData.indexCount = indexCount;
+        threeObject.userData.updated = true;
       },
       updateInitial: true,
       default: 0,
@@ -46,8 +46,8 @@ class InterleavedBufferGeometryDescriptor extends GeometryDescriptorBase {
     this.hasProp('groupCount', {
       type: PropTypes.number,
       update(threeObject, groupCount) {
-        self.groupCount = groupCount;
-        self.updated = true;
+        threeObject.userData.groupCount = groupCount;
+        threeObject.userData.updated = true;
       },
       updateInitial: true,
       default: 0,
@@ -55,38 +55,39 @@ class InterleavedBufferGeometryDescriptor extends GeometryDescriptorBase {
   }
 
   construct() {
-    this.children = [];
+    //this.children = [];
     return new THREE.BufferGeometry();
   }
 
   applyInitialProps(threeObject, props) {
     super.applyInitialProps(threeObject, props);
-    this.names = [];
-    this.vbo = props.vbo;
-    this.count = props.count;
-    this.offset = props.offset;
-    this.indexCount = props.indexCount;
-    this.groupCount = props.groupCount;
-    this.updated = true;
+    threeObject.userData.children = [];
+    threeObject.userData.names = [];
+    threeObject.userData.vbo = props.vbo;
+    threeObject.userData.count = props.count;
+    threeObject.userData.offset = props.offset;
+    threeObject.userData.indexCount = props.indexCount;
+    threeObject.userData.groupCount = props.groupCount;
+    threeObject.userData.updated = true;
   }
 
   recalculate(threeObject) {
-    this.attrOffset = this.offset;
+    var vertexOffset = threeObject.userData.offset;
 
     // setup index, if necessary
     threeObject.index = null;
     threeObject.clearGroups();
-    if (this.indexCount) {
-      const index = new Uint32Array(this.vbo, this.offset, this.indexCount);
-      this.attrOffset += 4 * this.indexCount;
+    if (threeObject.userData.indexCount) {
+      const index = new Uint32Array(threeObject.userData.vbo, threeObject.userData.offset, threeObject.userData.indexCount);
+      vertexOffset += 4 * threeObject.userData.indexCount;
       threeObject.setIndex(new THREE.BufferAttribute(index, 1));
-    } else if (this.groupCount) {
-      const index = new Uint32Array(this.count);
-      for (let i = 0; i < this.count; i++) {
+    } else if (threeObject.userData.groupCount) {
+      const index = new Uint32Array(threeObject.userData.count);
+      for (let i = 0; i < threeObject.userData.count; i++) {
         index[i] = i;
       }
       threeObject.setIndex(new THREE.BufferAttribute(index, 1));
-      const groups = new Uint32Array(this.vbo, this.offset, this.groupCount);
+      const groups = new Uint32Array(threeObject.userData.vbo, threeObject.userData.offset, threeObject.userData.groupCount);
       let ix = 0;
       Array.from(groups).forEach((i) => {
         if (i !== 0) {
@@ -94,68 +95,80 @@ class InterleavedBufferGeometryDescriptor extends GeometryDescriptorBase {
           ix = i;
         }
       });
-      threeObject.addGroup(ix, this.count - ix);
-      this.attrOffset += 4 * this.groupCount;
+      threeObject.addGroup(ix, threeObject.userData.count - ix);
+      vertexOffset += 4 * threeObject.userData.groupCount;
     }
 
     // attribute data
-    this.names.forEach(name => threeObject.removeAttribute(name));
-    this.names = [];
+    threeObject.userData.names.forEach(name => threeObject.removeAttribute(name));
+    threeObject.userData.names = [];
     let stride = 0;
-    this.children.forEach((child) => {
+    threeObject.userData.children.forEach((child) => {
       stride += child.size;
     });
-    const fv = new Float32Array(this.vbo, this.attrOffset, stride * this.count);
+    const fv = new Float32Array(threeObject.userData.vbo, vertexOffset, stride * threeObject.userData.count);
     const fbuf = new THREE.InterleavedBuffer(fv, stride);
     let attrOffset = 0;
     const names = [];
-    this.children.forEach((child) => {
+    threeObject.userData.children.forEach((child) => {
       const bufattr = new THREE.InterleavedBufferAttribute(fbuf, child.size, attrOffset);
       attrOffset += child.size;
       threeObject.addAttribute(child.id, bufattr);
       names.push(child.id);
     });
-    this.names = names;
-    this.updated = false;
+    threeObject.userData.names = names;
+    threeObject.userData.updated = false;
   }
 
   completePropertyUpdates(threeObject) {
-    if (this.updated) {
+    if (threeObject.userData.updated) {
         this.recalculate(threeObject);
     }
   }
 
   completeChildUpdates(threeObject) {
-    if (this.updated) {
+    if (threeObject.userData.updated) {
         this.recalculate(threeObject);
     }
   }
 
   addChildren(threeObject, children) {
-    this.children = this.children.concat(children);
-    this.updated = true;
+    if (!threeObject.userData.children) {
+      threeObject.userData.children = children;
+    } else {
+      threeObject.userData.children = threeObject.userData.children.concat(children);
+    }
+    threeObject.userData.updated = true;
     this.recalculate(threeObject);
   }
 
   addChild(threeObject, child, mountIndex) {
-    this.children.splice(mountIndex, 0, child);
-    this.updated = true;
+    if (!threeObject.userData.children) {
+      threeObject.userData.children = [child];
+    } else {
+      threeObject.userData.children.splice(mountIndex, 0, child);
+    }
+    threeObject.userData.updated = true;
     this.recalculate(threeObject);
   }
 
   removeChild(threeObject, child) {
-    this.children = this.children.filter(x => x !== child);
-    this.updated = true;
-    this.recalculate(threeObject);
+    if (threeObject.userData.children) {
+      threeObject.userData.children = threeObject.userData.children.filter(x => x !== child);
+      threeObject.userData.updated = true;
+      this.recalculate(threeObject);
+    }
   }
 
   moveChild(threeObject, childObject, toIndex) {
-    const idx = this.children.indexOf(childObject);
-    if (idx !== -1) {
-      this.children.splice(toIndex, 0, this.children.splice(idx, 1)[0]);
+    if (threeObject.userData.children) {
+      const idx = threeObject.userData.children.indexOf(childObject);
+      if (idx !== -1) {
+        threeObject.userData.children.splice(toIndex, 0, threeObject.userData.children.splice(idx, 1)[0]);
+      }
+      threeObject.userData.updated = true;
+      this.recalculate(threeObject);
     }
-    this.updated = true;
-    this.recalculate(threeObject);
   }
 
 }
