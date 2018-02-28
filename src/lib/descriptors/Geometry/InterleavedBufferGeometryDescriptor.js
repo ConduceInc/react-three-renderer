@@ -106,7 +106,19 @@ class InterleavedBufferGeometryDescriptor extends GeometryDescriptorBase {
     threeObject.userData.children.forEach((child) => {
       stride += child.size;
     });
-    const fv = new Float32Array(threeObject.userData.vbo, vertexOffset, stride * threeObject.userData.count);
+    var fv;
+    try {
+      fv = new Float32Array(threeObject.userData.vbo, vertexOffset, stride * threeObject.userData.count);
+    } catch(err) {
+      // threeObject gets reused, which leads to some unwelcome behavior
+      // specifically, the properties get updated (and thus call recalculate)
+      // before the children get updated (which are used for calculating the
+      // stride).  I don't know of a way to entirely avoid that condition
+      // but we can at least guard against the vbo being too short too
+      // accomodate the expected number of attributes (which is briefly
+      // incorrect)
+      fv = new Float32Array();
+    }
     const fbuf = new THREE.InterleavedBuffer(fv, stride);
     let attrOffset = 0;
     const names = [];
